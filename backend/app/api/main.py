@@ -1,4 +1,4 @@
-﻿"""FastAPI application."""
+"""FastAPI application."""
 
 import sys
 
@@ -63,8 +63,11 @@ async def startup_event():
     print("=" * 60)
 
     if settings.auto_create_tables:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        except Exception as exc:
+            print(f"数据库表已初始化或由其它 Worker 创建: {exc}")
 
     print_config()
 

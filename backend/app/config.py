@@ -1,4 +1,4 @@
-﻿"""Application configuration."""
+"""Application configuration."""
 
 import os
 from pathlib import Path
@@ -99,15 +99,16 @@ def validate_config():
 
 def print_config():
     """Print current configuration with sensitive values hidden."""
-    print(f"\u5e94\u7528\u540d\u79f0: {settings.app_name}")
-    print(f"\u670d\u52a1\u5668: {settings.host}:{settings.port}")
-    print(f"\u9ad8\u5fb7\u5730\u56feAPI Key: {'\u5df2\u914d\u7f6e' if settings.amap_api_key else '\u672a\u914d\u7f6e'}")
-
+    amap_status = "已配置" if settings.amap_api_key else "未配置"
     llm_api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+    llm_status = "已配置" if llm_api_key else "未配置"
     llm_base_url = os.getenv("LLM_BASE_URL") or settings.openai_base_url
     llm_model = os.getenv("LLM_MODEL_ID") or settings.openai_model
 
-    print(f"LLM API Key: {'\u5df2\u914d\u7f6e' if llm_api_key else '\u672a\u914d\u7f6e'}")
+    print(f"应用名称: {settings.app_name}")
+    print(f"服务器: {settings.host}:{settings.port}")
+    print(f"高德地图API Key: {amap_status}")
+    print(f"LLM API Key: {llm_status}")
     print(f"LLM Base URL: {llm_base_url}")
     print(f"LLM Model: {llm_model}")
-    print(f"\u65e5\u5fd7\u7ea7\u522b: {settings.log_level}")
+    print(f"日志级别: {settings.log_level}")

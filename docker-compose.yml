@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trip -d trip_planner"]
+      test: [ "CMD-SHELL", "pg_isready -U trip -d trip_planner" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -17,11 +17,13 @@ services:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://trip:trip@postgres:5432/trip_planner
       AUTO_CREATE_TABLES: "true"
       ENVIRONMENT: production
-      CORS_ORIGINS: http://localhost
+      CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080,http://localhost,http://127.0.0.1
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,7 +37,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "8080:80"
 
 volumes:
   postgres_data:
