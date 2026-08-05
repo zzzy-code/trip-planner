@@ -406,12 +406,39 @@ class MultiAgentTripPlanner:
                 raise ValueError("响应中未找到JSON数据")
 
             data = json.loads(json_str)
+
+            # 递归清理 dict 中的 location 拼写错误
+            def _clean_dict(obj):
+                if isinstance(obj, dict):
+                    # 如果当前字典代表 location，修正经纬度键名
+                    if "longlong" in obj or "lng" in obj or "long" in obj or "lon" in obj:
+                        val = obj.pop("longlong", None) or obj.pop("lng", None) or obj.pop("long", None) or obj.pop("lon", None)
+                        if "longitude" not in obj and val is not None:
+                            try:
+                                obj["longitude"] = float(val)
+                            except Exception:
+                                obj["longitude"] = 0.0
+                    if "lat" in obj and "latitude" not in obj:
+                        val = obj.pop("lat", None)
+                        if val is not None:
+                            try:
+                                obj["latitude"] = float(val)
+                            except Exception:
+                                obj["latitude"] = 0.0
+                    for k, v in list(obj.items()):
+                        _clean_dict(v)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        _clean_dict(item)
+
+            _clean_dict(data)
+
             trip_plan = TripPlan(**data)
             return trip_plan
 
         except Exception as e:
-            print(f"解析响应失败: {str(e)}")
-            raise
+            print(f"解析响应失败 ({e})，降级使用基础备用行程方案")
+            return self._create_fallback_plan(request)
 
     def _create_fallback_plan(self, request: TripRequest) -> TripPlan:
         """创建备用计划(当Agent失败时)"""

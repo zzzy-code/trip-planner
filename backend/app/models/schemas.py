@@ -1,11 +1,44 @@
 """数据模型定义"""
 
 from typing import List, Optional, Union
-from pydantic import BaseModel, Field, field_validator
-from datetime import date
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-# ============ 请求模型 ============
+# ============ 响应模型 ============
+
+class Location(BaseModel):
+    """地理位置"""
+    longitude: float = Field(default=0.0, description="经度")
+    latitude: float = Field(default=0.0, description="纬度")
+
+    @model_validator(mode='before')
+    @classmethod
+    def normalize_location(cls, values):
+        if isinstance(values, dict):
+            # 兼容 LLM 拼写错误或别名 (longlong, lng, long, lon)
+            for alt in ['longitude', 'longlong', 'lng', 'long', 'lon']:
+                if alt in values and values[alt] is not None:
+                    try:
+                        values['longitude'] = float(values[alt])
+                        break
+                    except (ValueError, TypeError):
+                        pass
+
+            # 兼容 LLM 拼写错误或别名 (latitude, lat)
+            for alt in ['latitude', 'lat']:
+                if alt in values and values[alt] is not None:
+                    try:
+                        values['latitude'] = float(values[alt])
+                        break
+                    except (ValueError, TypeError):
+                        pass
+
+            if 'longitude' not in values or values['longitude'] is None:
+                values['longitude'] = 0.0
+            if 'latitude' not in values or values['latitude'] is None:
+                values['latitude'] = 0.0
+
+        return values
 
 class TripRequest(BaseModel):
     """旅行规划请求"""
@@ -50,11 +83,6 @@ class RouteRequest(BaseModel):
 
 
 # ============ 响应模型 ============
-
-class Location(BaseModel):
-    """地理位置"""
-    longitude: float = Field(..., description="经度")
-    latitude: float = Field(..., description="纬度")
 
 
 class Attraction(BaseModel):
