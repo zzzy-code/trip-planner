@@ -19,7 +19,7 @@ from typing import Dict, Any, List
 from hello_agents import SimpleAgent
 from hello_agents.tools import MCPTool
 from ..services.llm_service import get_llm
-from ..services.unsplash_service import get_unsplash_service
+from ..services.unsplash_service import get_image_service
 from ..models.schemas import TripRequest, TripPlan, DayPlan, Attraction, Meal, WeatherInfo, Location, Hotel
 from ..config import get_settings
 
@@ -380,9 +380,9 @@ class MultiAgentTripPlanner:
         return query
 
     def _enrich_attraction_images(self, trip_plan, city: str):
-        """为缺少图片的景点补充Unsplash图片，失败不阻断行程生成。"""
+        """为缺少图片的景点补充图片（支持多源: Unsplash/Pexels），失败不阻断行程生成。"""
         try:
-            service = get_unsplash_service()
+            service = get_image_service()
             service.enrich_trip_plan_images(trip_plan, city)
         except Exception as e:
             print(f"景点配图失败(不影响行程): {e}")

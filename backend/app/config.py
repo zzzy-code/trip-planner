@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     unsplash_access_key: str = ""
     unsplash_secret_key: str = ""
 
+    pexels_api_key: str = ""
+
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4"
@@ -100,6 +102,8 @@ def validate_config():
 def print_config():
     """Print current configuration with sensitive values hidden."""
     amap_status = "已配置" if settings.amap_api_key else "未配置"
+    unsplash_status = "已配置" if settings.unsplash_access_key else "未配置"
+    pexels_status = "已配置" if settings.pexels_api_key else "未配置"
     llm_api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
     llm_status = "已配置" if llm_api_key else "未配置"
     llm_base_url = os.getenv("LLM_BASE_URL") or settings.openai_base_url
@@ -108,6 +112,8 @@ def print_config():
     print(f"应用名称: {settings.app_name}")
     print(f"服务器: {settings.host}:{settings.port}")
     print(f"高德地图API Key: {amap_status}")
+    print(f"Unsplash API Key: {unsplash_status}")
+    print(f"Pexels API Key: {pexels_status}")
     print(f"LLM API Key: {llm_status}")
     print(f"LLM Base URL: {llm_base_url}")
     print(f"LLM Model: {llm_model}")
