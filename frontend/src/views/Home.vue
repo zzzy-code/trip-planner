@@ -268,8 +268,9 @@ function handleSubmit() {
 
 <style scoped>
 .home-page {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .form-options {

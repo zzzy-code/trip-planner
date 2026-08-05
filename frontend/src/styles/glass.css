@@ -30,7 +30,8 @@
 html,
 body {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   margin: 0;
   background: #04121b;
   color: var(--ink);
@@ -274,7 +275,8 @@ textarea:focus-visible {
   right: var(--main-r);
   bottom: 0;
   z-index: 10;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: none;
   -ms-overflow-style: none;
