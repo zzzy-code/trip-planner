@@ -79,9 +79,9 @@ class UnsplashService:
 
     def enrich_trip_plan_images(self, plan, city: str, max_workers: int = 2):
         """
-        Fill missing attraction images from Unsplash.
-
-        Failures are non-fatal: attractions without a photo keep image_url=None.
+        为缺失图片的景点从 Unsplash 填充配图。
+        
+        失败不会导致程序中断：没有获取到照片的景点将保持 image_url=None。
         """
         if not self.access_key:
             print("Unsplash ACCESS_KEY 未配置，跳过景点配图")
