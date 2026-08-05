@@ -1,5 +1,7 @@
 """高德地图MCP服务封装"""
 
+import json
+import re
 from typing import List, Dict, Any, Optional
 from hello_agents.tools import MCPTool
 from ..config import get_settings
@@ -7,6 +9,23 @@ from ..models.schemas import Location, POIInfo, WeatherInfo
 
 # 全局MCP工具实例
 _amap_mcp_tool = None
+
+
+def _extract_json(result_text: str) -> Optional[Any]:
+    """从 MCP 工具返回的文本中提取并解析 JSON 对象"""
+    if not result_text:
+        return None
+    try:
+        return json.loads(result_text)
+    except Exception:
+        pass
+    json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', result_text)
+    if json_match:
+        try:
+            return json.loads(json_match.group(1))
+        except Exception:
+            pass
+    return None
 
 
 def get_amap_mcp_tool() -> MCPTool:
@@ -79,12 +98,29 @@ class AmapService:
             })
             
             # 解析结果
-            # 注意: MCP工具返回的是字符串,需要解析
-            # 这里简化处理,实际应该解析JSON
-            print(f"POI搜索结果: {result[:200]}...")  # 打印前200字符
+            print(f"POI搜索结果: {result[:200]}...")
             
-            # TODO: 解析实际的POI数据
-            return []
+            data = _extract_json(result)
+            pois = []
+            if isinstance(data, dict) and "pois" in data:
+                for item in data["pois"]:
+                    loc_str = item.get("location", "")
+                    coords = loc_str.split(",") if loc_str and "," in loc_str else ["0.0", "0.0"]
+                    try:
+                        lng, lat = float(coords[0]), float(coords[1])
+                    except (ValueError, IndexError):
+                        lng, lat = 0.0, 0.0
+                    pois.append(
+                        POIInfo(
+                            id=item.get("id", ""),
+                            name=item.get("name", ""),
+                            type=item.get("typecode", item.get("type", "景点")),
+                            address=item.get("address", "") if isinstance(item.get("address"), str) else "",
+                            location=Location(longitude=lng, latitude=lat),
+                            tel=item.get("tel") if isinstance(item.get("tel"), str) and item.get("tel") else None
+                        )
+                    )
+            return pois
             
         except Exception as e:
             print(f"POI搜索失败: {str(e)}")
@@ -112,8 +148,22 @@ class AmapService:
             
             print(f"天气查询结果: {result[:200]}...")
             
-            # TODO: 解析实际的天气数据
-            return []
+            data = _extract_json(result)
+            weather_list = []
+            if isinstance(data, dict) and "forecasts" in data:
+                for item in data["forecasts"]:
+                    weather_list.append(
+                        WeatherInfo(
+                            date=item.get("date", ""),
+                            day_weather=item.get("dayweather", ""),
+                            night_weather=item.get("nightweather", ""),
+                            day_temp=item.get("daytemp", 0),
+                            night_temp=item.get("nighttemp", 0),
+                            wind_direction=item.get("daywind", ""),
+                            wind_power=item.get("daypower", "")
+                        )
+                    )
+            return weather_list
             
         except Exception as e:
             print(f"天气查询失败: {str(e)}")
@@ -178,8 +228,30 @@ class AmapService:
             
             print(f"路线规划结果: {result[:200]}...")
             
-            # TODO: 解析实际的路线数据
-            return {}
+            data = _extract_json(result)
+            if isinstance(data, dict) and "route" in data:
+                route = data["route"]
+                paths = route.get("paths", [])
+                if paths:
+                    path = paths[0]
+                    distance = float(path.get("distance", 0))
+                    duration = int(path.get("duration", 0))
+                    steps = path.get("steps", [])
+                    instruction_list = [step.get("instruction") for step in steps if step.get("instruction")]
+                    description = " ➔ ".join(instruction_list[:5]) if instruction_list else "路线规划成功"
+                    return {
+                        "distance": distance,
+                        "duration": duration,
+                        "route_type": route_type,
+                        "description": description,
+                        "raw": data
+                    }
+            return {
+                "distance": 0.0,
+                "duration": 0,
+                "route_type": route_type,
+                "description": "路线规划获取完成"
+            }
             
         except Exception as e:
             print(f"路线规划失败: {str(e)}")
@@ -209,7 +281,16 @@ class AmapService:
 
             print(f"地理编码结果: {result[:200]}...")
 
-            # TODO: 解析实际的坐标数据
+            data = _extract_json(result)
+            items = []
+            if isinstance(data, dict):
+                items = data.get("return") or data.get("geocodes") or []
+            if items and isinstance(items, list):
+                loc_str = items[0].get("location", "")
+                if loc_str and "," in loc_str:
+                    lng_str, lat_str = loc_str.split(",")
+                    return Location(longitude=float(lng_str), latitude=float(lat_str))
+
             return None
 
         except Exception as e:
@@ -237,14 +318,8 @@ class AmapService:
 
             print(f"POI详情结果: {result[:200]}...")
 
-            # 解析结果并提取图片
-            import json
-            import re
-
-            # 尝试从结果中提取JSON
-            json_match = re.search(r'\{.*\}', result, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group())
+            data = _extract_json(result)
+            if isinstance(data, dict):
                 return data
 
             return {"raw": result}
