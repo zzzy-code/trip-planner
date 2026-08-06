@@ -20,7 +20,7 @@
 
 | 🏠 首页 - 个性化参数定制 | 🗺️ 结果页 - 智能行程与地图联动 | 📚 历史页 - 历史行程档案 |
 | :---: | :---: | :---: |
-| ![首页](home.png) | ![行程结果页](result.png) | ![历史记录页](history.png) |
+| ![首页](image/home.png) | ![行程结果页](image/result.png) | ![历史记录页](image/history.png) |
 
 ---
 
